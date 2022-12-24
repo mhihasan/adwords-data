@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:14.5-alpine
+    ports:
+      - "5442:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+      - ./initdb.d:/docker-entrypoint-initdb.d
+    environment:
+      POSTGRES_PASSWORD: adwords_admin_password
+      POSTGRES_USER: adwords_admin
+      POSTGRES_DB: adwords
+
+volumes:
+  postgres_data:
