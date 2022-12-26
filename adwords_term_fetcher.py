@@ -32,7 +32,9 @@ async def db_connection(**kwargs):
     await conn.close()
 
 
-async def search_adwords_keywords(term, search_type="broad", total_keywords=100):
+async def search_adwords_keywords(
+    term, columns, search_type="broad", total_keywords=100
+):
     separator = {"phrase": "<->", "broad": "&"}[search_type]
     q = f"{separator}".join(term.split(" "))
 
@@ -42,23 +44,17 @@ async def search_adwords_keywords(term, search_type="broad", total_keywords=100)
             from adwords_en_us
             where keyword_tsv @@ to_tsquery('{q}')
         )
-        select keyword, volume
+        select {', '.join(columns)}
         from matched_keywrods
-        where spell_type is null and volume is not null
-        order by volume desc
+        where spell_type is null
+        order by volume desc nulls last 
         limit {total_keywords};
     """
 
     async with db_connection(**db_params) as conn:
-        values = await conn.fetch(search_query)
+        records = await conn.fetch(search_query)
 
-    return [
-        {
-            "keyword": value["keyword"],
-            "volume": value["volume"],
-        }
-        for value in values
-    ]
+    return [{col: record[col] for col in columns} for record in records]
 
 
 def print_result(result):
@@ -68,20 +64,28 @@ def print_result(result):
 
 
 async def main():
-    multi_word_term = 'law apartment'
+    multi_word_term = "law apartment"
     for search_type in ["phrase", "broad"]:
-        print(f"<<<<<<<<< Search type: {search_type}, term: {multi_word_term} >>>>>>>>>")
+        print(
+            f"<<<<<<<<< Search type: {search_type}, term: {multi_word_term} >>>>>>>>>"
+        )
 
-        result = await search_adwords_keywords(multi_word_term, search_type=search_type)
+        result = await search_adwords_keywords(
+            multi_word_term, columns=["keyword", "volume"], search_type=search_type
+        )
         print_result(result)
 
-    singe_word_term = 'apartment'
-    for search_type in ['broad']:
-        print(f"<<<<<<<<< Search type: {search_type}, term: {singe_word_term} >>>>>>>>>")
+    singe_word_term = "apartment"
+    for search_type in ["broad"]:
+        print(
+            f"<<<<<<<<< Search type: {search_type}, term: {singe_word_term} >>>>>>>>>"
+        )
 
-        result = await search_adwords_keywords(singe_word_term, search_type=search_type)
+        result = await search_adwords_keywords(
+            singe_word_term, columns=["keyword", "volume"], search_type=search_type
+        )
         print_result(result)
 
 
 if __name__ == "__main__":
-   asyncio.run(main())
+    asyncio.run(main())
