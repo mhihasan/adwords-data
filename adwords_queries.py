@@ -38,14 +38,14 @@ async def search_adwords_keywords(term, search_type="phrase", total_keywords=100
 
     search_query = f"""
         with searched_keywrods as (
-            select keyword, keyword_tsv, volume, ts_rank(keyword_tsv, query) as keyword_rank
+            select *
             from adwords_en_us, to_tsquery('{q}') as query
             where keyword_tsv @@ query
-            and spell_type is null and volume is not null
         )
         select keyword, volume
         from searched_keywrods
-        order by volume desc, keyword_rank desc 
+        where spell_type is null and volume is not null
+        order by volume desc
         limit {total_keywords};
     """
 
@@ -62,25 +62,21 @@ async def search_adwords_keywords(term, search_type="phrase", total_keywords=100
 
 
 async def main():
-    result = await search_adwords_keywords('law apartment', search_type='phrase')
-    print("Phrase search results:")
-    for r in result:
-        print(r)
+    multi_word_term = 'law apartment'
+    for search_type in ["phrase", "broad"]:
+        print(f"<<<<<<<<< Search type: {search_type}, term: {multi_word_term} >>>>>>>>>")
+        result = await search_adwords_keywords(multi_word_term, search_type=search_type)
+        for r in result:
+            print(r)
+        print("\n")
 
-    result = await search_adwords_keywords("law apartment", search_type="broad")
-    print("Broad search results:")
-    for r in result:
-        print(r)
-    #
-    # result = await search_adwords_keywords('law', search_type='phrase')
-    # print("Phrase search results:")
-    # for r in result:
-    #     print(r)
-    #
-    # result = await search_adwords_keywords('law', search_type='broad')
-    # print("Broad search results:")
-    # for r in result:
-    #     print(r)
+    singe_word_term = 'apartment'
+    for search_type in ['broad']:
+        print(f"<<<<<<<<< Search type: {search_type}, term: {singe_word_term} >>>>>>>>>")
+        result = await search_adwords_keywords(singe_word_term, search_type=search_type)
+        for r in result:
+            print(r)
+        print("\n")
 
 
 if __name__ == "__main__":
