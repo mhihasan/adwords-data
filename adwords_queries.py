@@ -32,7 +32,7 @@ async def db_connection(**kwargs):
     await conn.close()
 
 
-async def search_adwords_keywords(term, search_type="phrase", total_keywords=100):
+async def search_adwords_keywords(term, search_type="broad", total_keywords=100):
     separator = {"phrase": "<->", "broad": "&"}[search_type]
     q = f"{separator}".join(term.split(" "))
 
