@@ -1,4 +1,5 @@
 import asyncio
+import csv
 import os
 from contextlib import asynccontextmanager
 
@@ -32,6 +33,17 @@ async def db_connection(**kwargs):
     await conn.close()
 
 
+def write_to_file(file_name, result):
+    file_path = os.path.join(os.path.dirname(__file__), f"output/{file_name}.csv")
+    with open(file_path, "w") as f:
+        fieldnames = result[0].keys()
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for r in result:
+            writer.writerow(r)
+
+
 async def search_adwords_keywords(
     term, columns, search_type="broad", total_keywords=100
 ):
@@ -63,28 +75,34 @@ def print_result(result):
     print("\n")
 
 
+TERMS = {
+    "singe_word_terms": ["moneycard", "walmart", "keyword"],
+    "two_word_terms": ["sams club", "nfl scores"],
+    "three_word_terms": [
+        "spanish english translate",
+        "google knowledge panel",
+        "mp3 to youtube",
+    ],
+}
+
+
+async def run(terms, search_types):
+    for term in terms:
+        for search_type in search_types:
+            print(f"<<<<<<<<< Search type: {search_type}, term: {term} >>>>>>>>>")
+            result = await search_adwords_keywords(
+                term, ["keyword", "volume"], search_type=search_type
+            )
+            print_result(result)
+            write_to_file(f"{term}_{search_type}", result)
+
+
 async def main():
-    multi_word_term = "law apartment"
-    for search_type in ["phrase", "broad"]:
-        print(
-            f"<<<<<<<<< Search type: {search_type}, term: {multi_word_term} >>>>>>>>>"
-        )
-
-        result = await search_adwords_keywords(
-            multi_word_term, columns=["keyword", "volume"], search_type=search_type
-        )
-        print_result(result)
-
-    singe_word_term = "apartment"
-    for search_type in ["broad"]:
-        print(
-            f"<<<<<<<<< Search type: {search_type}, term: {singe_word_term} >>>>>>>>>"
-        )
-
-        result = await search_adwords_keywords(
-            singe_word_term, columns=["keyword", "volume"], search_type=search_type
-        )
-        print_result(result)
+    await asyncio.gather(
+        run(TERMS["singe_word_terms"], ["broad"]),
+        run(TERMS["two_word_terms"], ["broad", "phrase"]),
+        run(TERMS["three_word_terms"], ["broad", "phrase"]),
+    )
 
 
 if __name__ == "__main__":
