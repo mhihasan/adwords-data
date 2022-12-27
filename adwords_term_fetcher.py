@@ -1,13 +1,13 @@
 import asyncio
-import csv
 import os
+import time
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 
 import asyncpg
 
-from utils import print_result, TERMS, write_to_file
+from utils import TERMS, write_to_file
 
 dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(dotenv_path)
@@ -35,9 +35,6 @@ async def db_connection(**kwargs):
     await conn.close()
 
 
-
-
-
 async def search_adwords_keywords(
     term, columns, search_type="broad", total_keywords=1000
 ):
@@ -53,7 +50,6 @@ async def search_adwords_keywords(
         select {', '.join(columns)}
         from matched_keywrods
         where spell_type is null
-            and volume > 0
         order by volume desc
         limit {total_keywords};
     """
@@ -68,10 +64,11 @@ async def run(terms, search_types):
     for term in terms:
         for search_type in search_types:
             print(f"<<<<<<<<< Search type: {search_type}, term: {term} >>>>>>>>>")
+            t1 = time.perf_counter()
             result = await search_adwords_keywords(
                 term, ["keyword", "volume"], search_type=search_type
             )
-            print_result(result)
+            print(f"Time taken, {term}: {time.perf_counter() - t1}")
             write_to_file(f"postgres/{term}", result)
 
 

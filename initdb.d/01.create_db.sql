@@ -8,3 +8,4 @@ create table adwords_en_us (
 );
 
 create index adwords_en_us_keyword_tsv_idx on adwords_en_us using gin(keyword_tsv);
+create index adwords_en_us_spell_type_volume_idx on adwords_en_us (spell_type, volume desc);
