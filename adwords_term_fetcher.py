@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 
 import asyncpg
 
+from utils import print_result, TERMS, write_to_file
+
 dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(dotenv_path)
 
@@ -33,19 +35,11 @@ async def db_connection(**kwargs):
     await conn.close()
 
 
-def write_to_file(file_name, result):
-    file_path = os.path.join(os.path.dirname(__file__), f"output/{file_name}.csv")
-    with open(file_path, "w") as f:
-        fieldnames = result[0].keys()
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
 
-        for r in result:
-            writer.writerow(r)
 
 
 async def search_adwords_keywords(
-    term, columns, search_type="broad", total_keywords=100
+    term, columns, search_type="broad", total_keywords=1000
 ):
     separator = {"phrase": "<->", "broad": "&"}[search_type]
     q = f"{separator}".join(term.split(" "))
@@ -59,7 +53,8 @@ async def search_adwords_keywords(
         select {', '.join(columns)}
         from matched_keywrods
         where spell_type is null
-        order by volume desc nulls last 
+            and volume > 0
+        order by volume desc
         limit {total_keywords};
     """
 
@@ -67,23 +62,6 @@ async def search_adwords_keywords(
         records = await conn.fetch(search_query)
 
     return [{col: record[col] for col in columns} for record in records]
-
-
-def print_result(result):
-    for r in result:
-        print(r)
-    print("\n")
-
-
-TERMS = {
-    "singe_word_terms": ["moneycard", "walmart", "keyword"],
-    "two_word_terms": ["sams club", "nfl scores"],
-    "three_word_terms": [
-        "spanish english translate",
-        "google knowledge panel",
-        "mp3 to youtube",
-    ],
-}
 
 
 async def run(terms, search_types):
@@ -94,14 +72,14 @@ async def run(terms, search_types):
                 term, ["keyword", "volume"], search_type=search_type
             )
             print_result(result)
-            write_to_file(f"{term}_{search_type}", result)
+            write_to_file(f"postgres/{term}", result)
 
 
 async def main():
     await asyncio.gather(
         run(TERMS["singe_word_terms"], ["broad"]),
-        run(TERMS["two_word_terms"], ["broad", "phrase"]),
-        run(TERMS["three_word_terms"], ["broad", "phrase"]),
+        run(TERMS["two_word_terms"], ["broad"]),
+        run(TERMS["three_word_terms"], ["broad"]),
     )
 
 
