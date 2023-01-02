@@ -71,14 +71,14 @@ async def run(terms, search_types):
                 pool, term, ["keyword", "volume"], search_type=search_type
             )
             print(f"Time taken, {term}: {time.perf_counter() - t1}")
-            write_to_file(f"output/{term}_{search_type}", result)
+            write_to_file(f"postgres/{term}", result)
 
 
 async def main():
     await asyncio.gather(
-        run(TERMS["singe_word_terms"], ["phrase", "broad"]),
-        run(TERMS["two_word_terms"], ["phrase", "broad"]),
-        run(TERMS["three_word_terms"], ["phrase", "broad"]),
+        run(TERMS["singe_word_terms"], ["broad"]),
+        run(TERMS["two_word_terms"], ["broad"]),
+        run(TERMS["three_word_terms"], ["broad"]),
     )
 
 
