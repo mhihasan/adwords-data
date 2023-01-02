@@ -1,7 +1,7 @@
 create table adwords_en_us (
     keyword text primary key,
     keyword_tsv tsvector generated always as ( to_tsvector('english', keyword)) stored,
-    volume float default 0.0,
+    volume int not null,
     cpc float default  0.0,
     competition float default  0.0,
     spell_type varchar(32)
