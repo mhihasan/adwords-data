@@ -36,7 +36,7 @@ async def db_connection(**kwargs):
 
 
 async def search_adwords_keywords(
-    term, columns, search_type="broad", total_keywords=1000
+    pool, term, columns, search_type="broad", total_keywords=1000
 ):
     separator = {"phrase": "<->", "broad": "&"}[search_type]
     q = f"{separator}".join(term.split(" "))
@@ -54,29 +54,31 @@ async def search_adwords_keywords(
         limit {total_keywords};
     """
 
-    async with db_connection(**db_params) as conn:
-        records = await conn.fetch(search_query)
+    async with pool.acquire() as conn:
+        result = await conn.fetch(search_query)
 
-    return [{col: record[col] for col in columns} for record in records]
+    return [{col: r[col] for col in columns} for r in result]
 
 
 async def run(terms, search_types):
+    pool = await asyncpg.create_pool(**db_params)
+
     for term in terms:
         for search_type in search_types:
             print(f"<<<<<<<<< Search type: {search_type}, term: {term} >>>>>>>>>")
             t1 = time.perf_counter()
             result = await search_adwords_keywords(
-                term, ["keyword", "volume"], search_type=search_type
+                pool, term, ["keyword", "volume"], search_type=search_type
             )
             print(f"Time taken, {term}: {time.perf_counter() - t1}")
-            write_to_file(f"postgres/{term}", result)
+            write_to_file(f"output/{term}_{search_type}", result)
 
 
 async def main():
     await asyncio.gather(
-        run(TERMS["singe_word_terms"], ["broad"]),
-        run(TERMS["two_word_terms"], ["broad"]),
-        run(TERMS["three_word_terms"], ["broad"]),
+        run(TERMS["singe_word_terms"], ["phrase", "broad"]),
+        run(TERMS["two_word_terms"], ["phrase", "broad"]),
+        run(TERMS["three_word_terms"], ["phrase", "broad"]),
     )
 
 
