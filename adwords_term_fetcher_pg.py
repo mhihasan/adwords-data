@@ -60,25 +60,28 @@ async def search_adwords_keywords(
     return [{col: r[col] for col in columns} for r in result]
 
 
-async def run(terms, search_types):
-    pool = await asyncpg.create_pool(**db_params)
-
+async def run(terms, search_types, add_suffix, project):
     for term in terms:
         for search_type in search_types:
             print(f"<<<<<<<<< Search type: {search_type}, term: {term} >>>>>>>>>")
             t1 = time.perf_counter()
             result = await search_adwords_keywords(
-                pool, term, ["keyword", "volume"], search_type=search_type
+                term, ["keyword", "volume"], search_type=search_type
             )
             print(f"Time taken, {term}: {time.perf_counter() - t1}")
-            write_to_file(f"postgres/{term}", result)
+
+            file_name = f"postgres/{project}/{term}_{search_type}" if not add_suffix else f"postgres/{project}/{term}"
+            write_to_file(file_name, result)
 
 
-async def main():
+async def main(project='papi'):
+    search_types = ["phrase", "broad"] if project == 'dapi' else ["broad"]
+    add_suffix = project == 'dapi'
+
     await asyncio.gather(
-        run(TERMS["singe_word_terms"], ["broad"]),
-        run(TERMS["two_word_terms"], ["broad"]),
-        run(TERMS["three_word_terms"], ["broad"]),
+        run(TERMS["singe_word_terms"], search_types, add_suffix, project),
+        run(TERMS["two_word_terms"], search_types, add_suffix, project),
+        run(TERMS["three_word_terms"], search_types, add_suffix, project),
     )
 
 

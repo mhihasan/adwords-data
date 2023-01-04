@@ -14,7 +14,7 @@
 ## Insert data from csv
 1. Run command to insert data from csv in postgres:
 ```sql
-copy table_name from 'data/test_keywords.csv' with (format csv, header true, delimiter ',');
+copy table_name from 'seed_data/test_keywords.csv' with (format csv, header true, delimiter ',');
 ```
 
 ## Run queries
