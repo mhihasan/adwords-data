@@ -6,6 +6,7 @@ from pathlib import Path
 from elasticsearch.helpers import async_bulk
 
 from fts_elastic.es_client import get_es_client
+from fts_elastic.index_creator import create_index
 
 
 def generate_actions(file_path, index_name):
@@ -30,6 +31,10 @@ async def main(index_name="adwords_en_us_2022_12"):
 
     docs_inserted = 0
     async with get_es_client() as es:
+        should_create_index = not es.indices.exists(index_name)
+        if should_create_index:
+            await create_index(es, index_name)
+
         for file in os.listdir(folder_path):
             file_path = f'{folder_path}/{file}'
 

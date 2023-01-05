@@ -1,16 +1,12 @@
 import asyncio
-import os
 import time
 
-# from dotenv import load_dotenv
-
-# from elasticsearch import AsyncElasticsearch
 
 from fts_elastic.es_client import get_es_client
-from utils import TERMS, write_to_file
+from utils import TERMS
 
 
-async def search_adwords_keywords(
+async def search_keywords(
     es_client, term, columns, search_type="broad", total_keywords=1000
 ):
     if search_type == "phrase":
@@ -47,13 +43,14 @@ async def run(es_client, terms, search_types, add_suffix, project):
         for search_type in search_types:
             print(f"<<<<<<<<< Search type: {search_type}, term: {term} >>>>>>>>>")
             t1 = time.perf_counter()
-            result = await search_adwords_keywords(
+            result = await search_keywords(
                 es_client, term, ["keyword", "volume"], search_type=search_type
             )
+            print(result)
             print(f"Time taken, {term}: {time.perf_counter() - t1}")
 
-            file_name = f"elastic_local/{project}/{term}_{search_type}" if add_suffix else f"elastic/{project}/{term}"
-            write_to_file(file_name, result)
+            # file_name = f"elastic_local/{project}/{term}_{search_type}" if add_suffix else f"elastic/{project}/{term}"
+            # write_to_file(file_name, result)
 
 
 async def main(project='papi'):
@@ -69,4 +66,4 @@ async def main(project='papi'):
 
 
 if __name__ == "__main__":
-    asyncio.run(main('dapi'))
+    asyncio.run(main())
