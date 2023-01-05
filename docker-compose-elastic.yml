@@ -1,0 +1,34 @@
+version: '3.9'
+
+services:
+  elasticsearch:
+      image: elasticsearch:${ELASTICSEARCH_VERSION}
+      ports:
+        - "${ELASTICSEARCH_PORT}:9200"
+      environment:
+        - node.name=${ELASTICSEARCH_NODE01_NAME}
+        - discovery.type=single-node
+        - ELASTIC_PASSWORD=${ELASTICSEARCH_PASSWORD}
+        - xpack.security.enabled=${ELASTICSEARCH_SECURITY_ENABLED}
+        - "ES_JAVA_OPTS=${ES_JAVA_OPTS}"
+        - network.bind_host=0
+      volumes:
+        - esdata:/usr/share/elasticsearch/data
+      ulimits:
+        memlock:
+          soft: -1
+          hard: -1
+
+  kibana:
+    image: kibana:${ELASTICSEARCH_VERSION}
+    environment:
+      - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USER}
+      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD}
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:${ELASTICSEARCH_PORT}
+    ports:
+      - '5601:5601'
+    depends_on:
+      - elasticsearch
+
+volumes:
+  esdata:

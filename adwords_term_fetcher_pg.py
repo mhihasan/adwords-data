@@ -70,7 +70,7 @@ async def run(terms, search_types, add_suffix, project):
             )
             print(f"Time taken, {term}: {time.perf_counter() - t1}")
 
-            file_name = f"postgres/{project}/{term}_{search_type}" if not add_suffix else f"postgres/{project}/{term}"
+            file_name = f"postgres/{project}/{term}_{search_type}" if add_suffix else f"postgres/{project}/{term}"
             write_to_file(file_name, result)
 
 

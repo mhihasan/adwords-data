@@ -1,7 +1,7 @@
 # full-text-search-postgres
 
 ## Run postgres database
-1. Run `docker-compose up -d` to start the database
+1. Run `docker-compose -f docker-compose-pg.yml up -d` to start the database
 
 ## Altering system configuration
 1. Tune system configuration for database using tools like [pgtune](https://pgtune.leopard.in.ua/#/).
